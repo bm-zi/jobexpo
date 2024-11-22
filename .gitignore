@@ -1,0 +1,8 @@
+arc/
+.env
+.dockerignore
+**/__pycache__/
+.pytest_cache/
+**/.vscode/
+**/migrations/
+**/staticfiles/

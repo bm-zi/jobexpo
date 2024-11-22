@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  web:
+    image: jobexpo_app_image_prod
+    container_name: jobexpo_app_container_prod
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        BUILD_ENV: prod
+    volumes:
+       - .:/backend
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - DJANGO_ENV=prod
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  db:
+    image: jobexpo_db_image_prod
+    container_name: jobexpo_db_container_prod
+    build:
+      context: .
+      dockerfile: Dockerfile.db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - jobexpo_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  jobexpo_data:
+    name: jobexpo_data_prod
+

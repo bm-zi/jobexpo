@@ -1,0 +1,59 @@
+# Use the official Python image
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Set the working directory
+WORKDIR /backend
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    libpq-dev \
+    libjpeg62-turbo-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libopenjp2-7-dev \
+    libtiff5-dev \
+    libwebp-dev \
+    python3-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Build argument to differentiate environments
+ARG BUILD_ENV=prod
+
+# Install dev-specific dependencies if in development environment
+RUN if [ "$BUILD_ENV" = "dev" ]; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    graphviz && \
+    pip install django-extensions pytest; \
+    fi
+
+# Create a non-root user without a home directory and without a password
+RUN useradd --no-create-home --shell /bin/false djangouser
+
+# Copy the requirements file
+COPY requirements.txt /backend/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the project files
+COPY . /backend/
+
+# Change ownership of the /backend directory to the djangouser
+RUN chown -R djangouser:djangouser /backend
+
+# Switch to the non-root user
+USER djangouser
+
+# Command to run uWSGI
+CMD ["uwsgi", "--http", "0.0.0.0:8000", "--module", "jobexpo_project.wsgi:application"]
+
